@@ -3,29 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>XOS | Community</title>
+<title>Community X</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root {
-    --bg: #0a0203;
-    --panel: #170609;
-    --line: #3a0f14;
+    --bg: #000000;
+    --panel: #0c0c0c;
+    --line: #2a2a2a;
     --text: #f4f4f6;
     --text-dim: #96969f;
-    --accent: #ff3b3b;
-    --accent-dim: #d92c2c;
-    --accent-ink: #ffffff;
+    --accent: #ffffff;
+    --accent-dim: #cfcfcf;
+    --accent-ink: #000000;
     box-sizing: border-box;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    background: radial-gradient(ellipse 80% 55% at 50% 0%, #2a0609 0%, #130305 45%, var(--bg) 85%);
+    background: var(--bg);
     color: var(--text);
     font-family: 'Inter', -apple-system, sans-serif;
     min-height: 100%;
@@ -55,16 +52,18 @@
     z-index: 5;
   }
 
-  .tabs {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(60px, 1fr));
-    gap: 2px;
+  .burger {
+    width: 40px; height: 40px;
     background: var(--panel);
     border: 1px solid var(--line);
-    border-radius: 999px;
-    padding: 3px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
   }
-  .tabs button, .lang-toggle button {
+  .burger span { width: 18px; height: 2px; background: var(--text); border-radius: 2px; }
+
+  .lang-toggle button {
     font-family: 'Inter', sans-serif;
     font-size: 13px;
     font-weight: 600;
@@ -75,13 +74,8 @@
     padding: 7px 10px;
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
-    white-space: nowrap;
-    text-align: center;
   }
-  .tabs button.active, .lang-toggle button.active {
-    background: var(--accent);
-    color: var(--accent-ink);
-  }
+  .lang-toggle button.active { background: var(--accent); color: var(--accent-ink); }
   .lang-toggle {
     display: flex;
     gap: 2px;
@@ -90,12 +84,38 @@
     border-radius: 999px;
     padding: 3px;
   }
-  .tabs button:focus-visible, .lang-toggle button:focus-visible,
+  .burger:focus-visible, .lang-toggle button:focus-visible,
   .join-btn:focus-visible, .social-link:focus-visible,
-  .buy-btn:focus-visible, .faq-q:focus-visible {
+  .buy-btn:focus-visible, .faq-q:focus-visible, .drawer-link:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
   }
+
+  /* SIDE DRAWER */
+  .drawer-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 20;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; left: 0; height: 100%; width: 240px;
+    background: var(--panel); border-right: 1px solid var(--line);
+    transform: translateX(-100%); transition: transform 0.25s ease;
+    z-index: 21; display: flex; flex-direction: column;
+    padding: calc(20px + env(safe-area-inset-top, 0px)) 16px 20px;
+    gap: 6px;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-close {
+    align-self: flex-end; width: 32px; height: 32px; background: none; border: none;
+    color: var(--text-dim); font-size: 20px; cursor: pointer; margin-bottom: 10px;
+  }
+  .drawer-link {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    color: var(--text-dim); font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 500;
+    padding: 12px 10px; border-radius: 10px; cursor: pointer;
+  }
+  .drawer-link.active { background: var(--accent); color: var(--accent-ink); }
 
   main {
     width: 100%;
@@ -108,7 +128,17 @@
   }
 
   .page { display: none; width: 100%; }
-  .page.active { display: flex; flex-direction: column; align-items: center; }
+  .page.active {
+    display: flex; flex-direction: column; align-items: center;
+    animation: pageIn 0.35s ease both;
+  }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .page.active { animation: none; }
+  }
 
   /* HOME */
   #page-home {
@@ -205,43 +235,71 @@
   .buy-btn:hover { opacity: 0.85; }
   .plan-note { font-size: 12px; color: var(--text-dim); opacity: 0.7; }
 
-  /* NEWS */
-  #page-news { gap: 0; padding-bottom: 30px; }
-  .news-admin {
-    width: 100%; margin-top: 20px; border: 1px solid var(--accent);
-    border-radius: 14px; background: var(--panel); padding: 16px;
-    display: flex; flex-direction: column; gap: 10px;
+  /* MOBILE ADAPTIVE BANNER (bottom) */
+  .banner {
+    display: none;
+    width: 100%;
+    max-width: 320px;
+    margin: 12px auto 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    z-index: 5;
+    position: relative;
+    transition: border-color 0.15s ease, transform 0.15s ease;
   }
-  .news-admin-label { font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 0.03em; }
-  .news-admin input, .news-admin textarea {
-    width: 100%; background: #050506; border: 1px solid var(--line); border-radius: 10px;
-    color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; padding: 10px 12px; resize: vertical;
+  .banner.has-img { display: block; }
+  .banner a {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: pointer;
   }
-  .news-admin textarea { min-height: 70px; }
-  .news-admin button {
-    align-self: flex-start; background: var(--accent); color: var(--accent-ink);
-    font-weight: 600; font-size: 14px; border: none; border-radius: 10px;
-    padding: 10px 20px; cursor: pointer; transition: opacity 0.15s ease;
+  .banner:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
   }
-  .news-admin button:hover { opacity: 0.85; }
-  .news-list { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-  .news-item {
+  .banner img {
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* DONATE */
+  #page-donate { gap: 0; padding-bottom: 30px; }
+  .donate-list { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+  .donate-item {
     border: 1px solid var(--line); border-radius: 14px; background: var(--panel);
-    padding: 16px 18px; display: flex; flex-direction: column; gap: 6px;
+    padding: 16px 18px; display: flex; flex-direction: column; gap: 10px;
   }
-  .news-item-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .news-date { font-size: 12px; color: var(--accent); font-weight: 600; }
-  .news-title { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; }
-  .news-body { font-size: 14px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap; }
-  .news-del {
-    background: none; border: 1px solid var(--line); color: var(--text-dim);
-    border-radius: 8px; font-size: 12px; padding: 4px 9px; cursor: pointer; flex-shrink: 0;
+  .donate-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .donate-name { font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 16px; }
+  .donate-tag { font-size: 11px; color: var(--text-dim); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+  .donate-link-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 14px;
+    text-decoration: none; padding: 10px 18px; border-radius: 10px; align-self: flex-start;
+    transition: opacity 0.15s ease;
   }
-  .news-del:hover { border-color: var(--accent); color: var(--accent); }
-  .news-empty { color: var(--text-dim); font-size: 14px; text-align: center; margin-top: 24px; }
+  .donate-link-btn:hover { opacity: 0.85; }
+  .donate-copy {
+    width: 100%; background: #000000; border: 1px solid var(--line); border-radius: 10px;
+    color: var(--text); font-family: 'Inter', monospace; font-size: 13px;
+    padding: 10px 12px; cursor: pointer; text-align: left; word-break: break-all;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    transition: border-color 0.15s ease;
+  }
+  .donate-copy:hover { border-color: var(--accent); }
+  .donate-copy .copy-icon { flex-shrink: 0; font-size: 12px; color: var(--text-dim); }
+  .donate-copy.copied { border-color: var(--accent); }
+  .donate-copy.copied .copy-icon { color: var(--accent); }
+  .donate-item.soon { opacity: 0.55; }
+  .donate-soon-badge { font-size: 12px; color: var(--accent); font-weight: 600; }
 
   @media (prefers-reduced-motion: reduce) {
-    .join-btn, .social-link, .buy-btn, .faq-a, .news-admin button { transition: none; }
+    .join-btn, .social-link, .buy-btn, .faq-a, .drawer, .drawer-overlay, .banner { transition: none; }
   }
 </style>
 </head>
@@ -250,21 +308,23 @@
 <canvas id="stars"></canvas>
 
 <div class="topbar">
-  <div class="tabs" role="tablist" aria-label="Sections">
-    <button type="button" class="active" data-tab="home" onclick="setTab('home')" data-en="Home" data-ru="Главная">Home</button>
-    <button type="button" data-tab="faq" onclick="setTab('faq')" data-en="FAQ" data-ru="Вопросы">FAQ</button>
-    <button type="button" data-tab="shop" onclick="setTab('shop')" data-en="Shop" data-ru="Магазин">Shop</button>
-    <button type="button" data-tab="news" onclick="setTab('news')" data-en="News" data-ru="Новости">News</button>
-  </div>
-  <div style="display:flex; align-items:center; gap:8px;">
-    <button id="admin-btn" type="button" onclick="adminLogin()" title="Admin login" style="width:30px; height:30px; border-radius:999px; background:var(--panel); border:1px solid var(--line); color:var(--text-dim); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center;">🔑</button>
-    <div class="lang-toggle" role="group" aria-label="Language">
-      <button type="button" class="active" data-lang="en" onclick="setLang('en')">EN</button>
-      <button type="button" data-lang="ru" onclick="setLang('ru')">RU</button>
-    </div>
+  <button class="burger" type="button" onclick="openDrawer()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="lang-toggle" role="group" aria-label="Language">
+    <button type="button" class="active" data-lang="en" onclick="setLang('en')">EN</button>
+    <button type="button" data-lang="ru" onclick="setLang('ru')">RU</button>
   </div>
 </div>
-<div id="admin-uid-box" style="display:none; max-width:560px; width:100%; margin-top:10px; padding:10px 14px; background:var(--panel); border:1px solid var(--accent); border-radius:10px; font-size:12px; color:var(--text-dim); word-break:break-all;"></div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<nav class="drawer" id="drawer" role="dialog" aria-label="Sections">
+  <button class="drawer-close" type="button" onclick="closeDrawer()" aria-label="Close">✕</button>
+  <button class="drawer-link active" data-tab="home" onclick="setTab('home')" data-en="Home" data-ru="Главная">Home</button>
+  <button class="drawer-link" data-tab="faq" onclick="setTab('faq')" data-en="FAQ" data-ru="Вопросы">FAQ</button>
+  <button class="drawer-link" data-tab="shop" onclick="setTab('shop')" data-en="Shop" data-ru="Магазин">Shop</button>
+  <button class="drawer-link" data-tab="donate" onclick="setTab('donate')" data-en="Donate" data-ru="Донат">Donate</button>
+</nav>
 
 <main>
 
@@ -273,9 +333,9 @@
       <svg viewBox="0 0 24 24"><path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.375-.444.864-.608 1.25-1.844-.276-3.68-.276-5.487 0-.164-.39-.405-.875-.617-1.25a.077.077 0 0 0-.079-.036 19.736 19.736 0 0 0-4.885 1.49.07.07 0 0 0-.032.027C.533 9.093-.319 13.555.099 17.961a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.061.061 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.311-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.311-.947 2.38-2.157 2.38z"/></svg>
     </div>
 
-    <h1 data-en="XOS <span>|</span> Community" data-ru="XOS <span>|</span> Community">XOS <span>|</span> Community</h1>
+    <h1>Community X</h1>
 
-    <a class="join-btn" href="https://discord.gg/PYWfqwJnd" target="_blank" rel="noopener">
+    <a class="join-btn" href="https://discord.gg/MnkYAVhwV6" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24"><path d="M20.317 4.492c-1.53-.69-3.17-1.2-4.885-1.49a.075.075 0 0 0-.079.036c-.21.375-.444.864-.608 1.25-1.844-.276-3.68-.276-5.487 0-.164-.39-.405-.875-.617-1.25a.077.077 0 0 0-.079-.036 19.736 19.736 0 0 0-4.885 1.49.07.07 0 0 0-.032.027C.533 9.093-.319 13.555.099 17.961a.08.08 0 0 0 .031.055 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.094-.838-9.52-3.549-13.442a.061.061 0 0 0-.031-.028zM8.02 15.278c-1.182 0-2.157-1.069-2.157-2.38 0-1.312.956-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.311-.956 2.38-2.157 2.38zm7.975 0c-1.183 0-2.157-1.069-2.157-2.38 0-1.312.955-2.38 2.157-2.38 1.21 0 2.176 1.077 2.157 2.38 0 1.311-.947 2.38-2.157 2.38z"/></svg>
       <span data-en="Join Discord" data-ru="Присоединиться">Join Discord</span>
     </a>
@@ -358,7 +418,7 @@
           <li data-en="Access to VIP-only channels" data-ru="Доступ к VIP-каналам">Access to VIP-only channels</li>
           <li data-en="Higher upload limit for clips and files" data-ru="Больший лимит на загрузку файлов и клипов">Higher upload limit for clips and files</li>
         </ul>
-        <a class="buy-btn" href="https://discord.gg/PYWfqwJnd" target="_blank" rel="noopener" data-en="Get VIP" data-ru="Купить VIP">Get VIP</a>
+        <a class="buy-btn" href="https://discord.gg/MnkYAVhwV6" target="_blank" rel="noopener" data-en="Get VIP" data-ru="Купить VIP">Get VIP</a>
       </div>
       <div class="plan featured">
         <div class="plan-top">
@@ -370,30 +430,64 @@
           <li data-en="Exclusive Premium-only channels" data-ru="Эксклюзивные Premium-каналы">Exclusive Premium-only channels</li>
           <li data-en="Priority support from the team" data-ru="Приоритетная поддержка от команды">Priority support from the team</li>
         </ul>
-        <a class="buy-btn" href="https://discord.gg/PYWfqwJnd" target="_blank" rel="noopener" data-en="Get Premium" data-ru="Купить Premium">Get Premium</a>
+        <a class="buy-btn" href="https://discord.gg/MnkYAVhwV6" target="_blank" rel="noopener" data-en="Get Premium" data-ru="Купить Premium">Get Premium</a>
       </div>
     </div>
     <p class="plan-note" data-en="Purchases are handled inside the Discord server." data-ru="Покупки оформляются прямо на Discord-сервере.">Purchases are handled inside the Discord server.</p>
   </section>
 
-  <section id="page-news" class="page">
+  <section id="page-donate" class="page">
     <div class="section-head">
-      <h2 data-en="News" data-ru="Новости">News</h2>
-      <p data-en="Important updates about the server." data-ru="Важные новости сервера.">Important updates about the server.</p>
+      <h2 data-en="Donate" data-ru="Донат">Donate</h2>
+      <p data-en="Support the server however works for you." data-ru="Поддержи сервер удобным способом.">Support the server however works for you.</p>
     </div>
+    <div class="donate-list">
 
-    <div id="news-admin" class="news-admin" style="display:none;">
-      <span class="news-admin-label" data-en="ADD NEWS (visible only to you)" data-ru="ДОДАТИ НОВИНУ (видно лише вам)">ADD NEWS (visible only to you)</span>
-      <input id="news-title-input" type="text" data-en-placeholder="Title" data-ru-placeholder="Заголовок" placeholder="Title">
-      <textarea id="news-body-input" data-en-placeholder="News text..." data-ru-placeholder="Текст новости..." placeholder="News text..."></textarea>
-      <button type="button" onclick="addNews()" data-en="Publish" data-ru="Опубликовать">Publish</button>
+      <div class="donate-item">
+        <div class="donate-top">
+          <span class="donate-name">Monobank</span>
+          <span class="donate-tag" data-en="Worldwide" data-ru="По всему миру">Worldwide</span>
+        </div>
+        <a class="donate-link-btn" href="https://send.monobank.ua/jar/ABHBPZzEXz" target="_blank" rel="noopener" data-en="Open jar" data-ru="Открыть банку">Open jar</a>
+      </div>
+
+      <div class="donate-item">
+        <div class="donate-top"><span class="donate-name">BTC</span></div>
+        <button type="button" class="donate-copy" onclick="copyAddr(this, 'bc1qq7lshxwp2qrjw75ccmkx634hgjzyr82lg628su')">
+          <span>bc1qq7lshxwp2qrjw75ccmkx634hgjzyr82lg628su</span>
+          <span class="copy-icon" data-en="copy" data-ru="копировать">copy</span>
+        </button>
+      </div>
+
+      <div class="donate-item">
+        <div class="donate-top"><span class="donate-name">ETH</span></div>
+        <button type="button" class="donate-copy" onclick="copyAddr(this, '0xf375524BF4529d70Bf01fCc944b763c367530910')">
+          <span>0xf375524BF4529d70Bf01fCc944b763c367530910</span>
+          <span class="copy-icon" data-en="copy" data-ru="копировать">copy</span>
+        </button>
+      </div>
+
+      <div class="donate-item">
+        <div class="donate-top"><span class="donate-name">USDT</span></div>
+        <button type="button" class="donate-copy" onclick="copyAddr(this, 'xtBZu7c4NAFcMhoAeqmsTjruX1RBY7vSj4XMAEm4qsS')">
+          <span>xtBZu7c4NAFcMhoAeqmsTjruX1RBY7vSj4XMAEm4qsS</span>
+          <span class="copy-icon" data-en="copy" data-ru="копировать">copy</span>
+        </button>
+      </div>
+
+      <div class="donate-item soon">
+        <div class="donate-top">
+          <span class="donate-name">PayPal</span>
+          <span class="donate-soon-badge" data-en="Soon" data-ru="Скоро...">Soon</span>
+        </div>
+      </div>
+
     </div>
-
-    <div id="news-list" class="news-list"></div>
-    <p id="news-empty" class="news-empty" data-en="No news yet." data-ru="Новостей пока нет.">No news yet.</p>
   </section>
 
 </main>
+
+<div class="banner" id="banner-bottom"></div>
 
 <script>
   // language
@@ -413,14 +507,52 @@
   }
   setLang('ru');
 
-  // tabs
+  // tabs + side drawer
   function setTab(tab) {
     document.querySelectorAll('.page').forEach(function(p) {
       p.classList.toggle('active', p.id === 'page-' + tab);
     });
-    document.querySelectorAll('.tabs button').forEach(function(btn) {
+    document.querySelectorAll('.drawer-link').forEach(function(btn) {
       btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
     });
+    closeDrawer();
+  }
+  function openDrawer() {
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawer-overlay').classList.add('open');
+  }
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('open');
+  }
+
+  // donate: copy wallet address to clipboard
+  function copyAddr(btn, addr) {
+    var done = function () {
+      var icon = btn.querySelector('.copy-icon');
+      btn.classList.add('copied');
+      icon.textContent = currentLang === 'ru' ? 'скопировано ✓' : 'copied ✓';
+      setTimeout(function () {
+        btn.classList.remove('copied');
+        icon.textContent = currentLang === 'ru' ? 'копировать' : 'copy';
+      }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(addr).then(done).catch(function () { fallbackCopy(addr, done); });
+    } else {
+      fallbackCopy(addr, done);
+    }
+  }
+  function fallbackCopy(text, cb) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    if (cb) cb();
   }
 
   // faq accordion
@@ -431,119 +563,48 @@
     if (!wasOpen) item.classList.add('open');
   }
 
-  // ====== FIREBASE SETUP ======
-  // Your real project config (from Firebase console → Project settings).
-  var firebaseConfig = {
-    apiKey: "AIzaSyB-mqVqr9ys94IRKvCdBiO3veD0LlLmIeo",
-    authDomain: "xos-community.firebaseapp.com",
-    projectId: "xos-community",
-    storageBucket: "xos-community.firebasestorage.app",
-    messagingSenderId: "999942366561",
-    appId: "1:999942366561:web:244f7d8d7e30532b0a1120",
-    measurementId: "G-HT6GP3W5TP"
-  };
-  firebase.initializeApp(firebaseConfig);
-  var auth = firebase.auth();
-  var db = firebase.firestore();
-
-  // PASTE YOUR OWN UID HERE after your first login (see the box that
-  // appears on-screen after you click the 🔑 button and sign in once).
-  // Until you set this, nobody — including you — sees the admin panel.
-  var ADMIN_UID = "WZejHEUjZ3Mq7Hjp5Yq5jy74O4t1";
-
-  window.adminLogin = function () {
-    var provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider).catch(function (err) {
-      alert('Login error: ' + err.message);
-    });
+  // ===================================================================
+  // MOBILE ADAPTIVE BANNER (bottom) — mobile banner width (320px max),
+  // preserves full image without cropping or upscaling past natural size.
+  // ===================================================================
+  var BANNER = {
+    image: "https://cdn.discordapp.com/attachments/1543317422176477195/1573268392826245251/Untitled25_20261119174813.png?ex=6b0163de&is=6b00125e&hm=e7c63a770d25a7f8783fed0e81e4b6c5c8f101a99b5178dc6bf7ef1a763fe82d",
+    link: "https://discord.gg/eC4KUCpuUY",
+    maxWidth: 320
   };
 
-  // news (shared, persisted via Firebase Firestore)
-  (function () {
-    var newsCol = db.collection('news');
-    var isAdmin = false;
+  function fitMobileBanner(box, img) {
+    var availableWidth = Math.max(180, window.innerWidth - 40);
+    var cap = BANNER.maxWidth || 320;
+    var targetWidth = img.naturalWidth
+      ? Math.min(availableWidth, cap, img.naturalWidth)
+      : Math.min(availableWidth, cap);
+    box.style.maxWidth = targetWidth + 'px';
+  }
 
-    function formatDate(iso) {
-      try {
-        var d = new Date(iso);
-        return d.toLocaleDateString(currentLang === 'ru' ? 'ru-RU' : 'en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-      } catch (e) { return ''; }
-    }
-
-    function renderNews(docs) {
-      var list = document.getElementById('news-list');
-      var empty = document.getElementById('news-empty');
-      list.innerHTML = '';
-      if (!docs.length) { empty.style.display = 'block'; return; }
-      empty.style.display = 'none';
-      docs.forEach(function (snap) {
-        var d = snap.data();
-        var item = document.createElement('div');
-        item.className = 'news-item';
-        var top = document.createElement('div');
-        top.className = 'news-item-top';
-        var date = document.createElement('span');
-        date.className = 'news-date';
-        date.textContent = formatDate(d.date);
-        top.appendChild(date);
-        if (isAdmin) {
-          var del = document.createElement('button');
-          del.className = 'news-del';
-          del.textContent = currentLang === 'ru' ? 'Удалить' : 'Delete';
-          del.onclick = function () { newsCol.doc(snap.id).delete(); };
-          top.appendChild(del);
-        }
-        item.appendChild(top);
-        var title = document.createElement('div');
-        title.className = 'news-title';
-        title.textContent = d.title || '';
-        item.appendChild(title);
-        var body = document.createElement('div');
-        body.className = 'news-body';
-        body.textContent = d.body || '';
-        item.appendChild(body);
-        list.appendChild(item);
-      });
-    }
-
-    window.addNews = function () {
-      var titleEl = document.getElementById('news-title-input');
-      var bodyEl = document.getElementById('news-body-input');
-      var title = titleEl.value.trim();
-      var body = bodyEl.value.trim();
-      if (!title && !body) return;
-      newsCol.add({ title: title, body: body, date: new Date().toISOString(), uid: auth.currentUser ? auth.currentUser.uid : null });
-      titleEl.value = '';
-      bodyEl.value = '';
-    };
-
-    // live list for everyone (read access is open in the security rules)
-    newsCol.orderBy('date', 'desc').limit(50).onSnapshot(function (snap) {
-      renderNews(snap.docs);
-    }, function () { /* read rejected or offline: list just stays as-is */ });
-
-    // react to sign-in state
-    auth.onAuthStateChanged(function (user) {
-      var uidBox = document.getElementById('admin-uid-box');
-      var adminBtn = document.getElementById('admin-btn');
-      if (user) {
-        isAdmin = (user.uid === ADMIN_UID);
-        adminBtn.textContent = isAdmin ? '🔓' : '🔒';
-        if (!isAdmin) {
-          // show the UID once so you can copy it into ADMIN_UID above
-          uidBox.style.display = 'block';
-          uidBox.textContent = (currentLang === 'ru' ? 'Увійшов як: ' : 'Signed in as: ') + user.email + ' — UID: ' + user.uid;
-        } else {
-          uidBox.style.display = 'none';
-        }
-        document.getElementById('news-admin').style.display = isAdmin ? 'flex' : 'none';
+  (function initBottomBanner() {
+    var box = document.getElementById('banner-bottom');
+    if (!BANNER.image || !box) return;
+    var img = new Image();
+    img.alt = 'Banner';
+    img.onload = function () {
+      if (BANNER.link) {
+        var a = document.createElement('a');
+        a.href = BANNER.link;
+        a.target = '_blank';
+        a.rel = 'noopener sponsored';
+        a.appendChild(img);
+        box.appendChild(a);
       } else {
-        isAdmin = false;
-        adminBtn.textContent = '🔑';
-        uidBox.style.display = 'none';
-        document.getElementById('news-admin').style.display = 'none';
+        box.appendChild(img);
       }
-    });
+      fitMobileBanner(box, img);
+      box.classList.add('has-img');
+      window.addEventListener('resize', function () {
+        fitMobileBanner(box, img);
+      });
+    };
+    img.src = BANNER.image;
   })();
 
   // animated starfield
